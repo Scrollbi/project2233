@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq; 
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -8,18 +8,25 @@ namespace project2233
 {
     public partial class MainWindow : Window
     {
-        private List<Book> books = new List<Book>(); 
-        private Book selectedBook; 
+        private List<Book> books = new List<Book>();
+        private Book selectedBook;
+        private Database dbHelper = new Database(); 
 
         public MainWindow()
         {
             InitializeComponent();
-            BooksDataGrid.ItemsSource = books; 
+            LoadBooks(); 
+        }
+
+        private void LoadBooks()
+        {
+            books = dbHelper.GetBooks(); 
+            BooksDataGrid.ItemsSource = books;
         }
 
         private void AddBookButton_Click(object sender, RoutedEventArgs e)
         {
-           
+            
             if (string.IsNullOrWhiteSpace(ArticleTextBox.Text) ||
                 string.IsNullOrWhiteSpace(TitleTextBox.Text) ||
                 string.IsNullOrWhiteSpace(GenreTextBox.Text) ||
@@ -31,10 +38,17 @@ namespace project2233
                 return;
             }
 
-            
+           
+            if (!int.TryParse(ArticleTextBox.Text, out int articleId))
+            {
+                MessageBox.Show("Артикул должен быть числом.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+           
             Book newBook = new Book
             {
-                Article = ArticleTextBox.Text,
+                Article = articleId, 
                 Title = TitleTextBox.Text,
                 Genre = GenreTextBox.Text,
                 Description = DescriptionTextBox.Text,
@@ -44,21 +58,22 @@ namespace project2233
                 Reader = ReaderTextBox.Text
             };
 
-            books.Add(newBook); 
-            BooksDataGrid.Items.Refresh(); 
+            
+            dbHelper.AddBook(newBook);
+            LoadBooks(); 
             ClearInputs(); 
         }
 
+
         private void EditBookButton_Click(object sender, RoutedEventArgs e)
         {
-            
             if (selectedBook == null)
             {
                 MessageBox.Show("Пожалуйста, выберите книгу для редактирования.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            selectedBook.Article = ArticleTextBox.Text;
+            selectedBook.Article = Convert.ToInt32(ArticleTextBox);
             selectedBook.Title = TitleTextBox.Text;
             selectedBook.Genre = GenreTextBox.Text;
             selectedBook.Description = DescriptionTextBox.Text;
@@ -67,32 +82,32 @@ namespace project2233
             selectedBook.Status = (StatusComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
             selectedBook.Reader = ReaderTextBox.Text;
 
-            BooksDataGrid.Items.Refresh(); 
-            ClearInputs(); 
+            
+            dbHelper.UpdateBook(selectedBook); 
+            LoadBooks(); 
+            ClearInputs();
         }
 
         private void DeleteBookButton_Click(object sender, RoutedEventArgs e)
         {
-            
             if (selectedBook == null)
             {
                 MessageBox.Show("Пожалуйста, выберите книгу для удаления.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-           
-            books.Remove(selectedBook);
-            BooksDataGrid.Items.Refresh(); 
-            ClearInputs(); 
+            dbHelper.DeleteBook(selectedBook.Article); 
+            LoadBooks(); 
+            ClearInputs();
         }
 
-        private void BooksDataGrid_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private void BooksDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            
             selectedBook = BooksDataGrid.SelectedItem as Book;
             if (selectedBook != null)
             {
-                ArticleTextBox.Text = selectedBook.Article;
+               
+                ArticleTextBox.Text = selectedBook.Article.ToString();
                 TitleTextBox.Text = selectedBook.Title;
                 GenreTextBox.Text = selectedBook.Genre;
                 DescriptionTextBox.Text = selectedBook.Description;
@@ -106,30 +121,15 @@ namespace project2233
 
         private void ClearInputs()
         {
-       
             ArticleTextBox.Clear();
             TitleTextBox.Clear();
             GenreTextBox.Clear();
             DescriptionTextBox.Clear();
-            IssueDatePicker.SelectedDate = null; 
+            IssueDatePicker.SelectedDate = null;
             ReturnDatePicker.SelectedDate = null;
-            StatusComboBox.SelectedItem = null; 
+            StatusComboBox.SelectedItem = null;
             ReaderTextBox.Clear();
             selectedBook = null;
         }
     }
-
-    
-    public class Book
-    {
-        public string Article { get; set; }
-        public string Title { get; set; }
-        public string Genre { get; set; }
-        public string Description { get; set; }
-        public DateTime IssueDate { get; set; }
-        public DateTime ReturnDate { get; set; }
-        public string Status { get; set; }
-        public string Reader { get; set; }
-    }
 }
-
