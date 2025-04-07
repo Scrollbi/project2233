@@ -1,103 +1,121 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace project2233
 {
     public class Database
     {
-        private string connectionString = "Server=dbsrv\\dub2024;Database=oshkinng207b2; Integrated Security=True;";
-        
+        private readonly DatabaseContext _context;
+
+        public Database()
+        {
+            _context = new DatabaseContext();
+
+            
+            _context.Database.EnsureCreated();
+
+            
+            if (!_context.Books.Any())
+            {
+                SeedInitialData();
+            }
+        }
+
+        private void SeedInitialData()
+        {
+            try
+            {
+                var initialBooks = new List<Book>
+                {
+                    new Book
+                    {
+                        Article = 1,
+                        Title = "123",
+                        Genre = "123",
+                        Description = "123",
+                        IssueDate = new DateTime(2023, 1, 1),
+                        ReturnDate = new DateTime(2023, 1, 15),
+                        Status = "Доступна",
+                        Reader = "123"
+                    },
+                    new Book
+                    {
+                        Article = 2,
+                        Title = "222",
+                        Genre = "222",
+                        Description = "222",
+                        IssueDate = new DateTime(2023, 2, 1),
+                        ReturnDate = new DateTime(2023, 2, 15),
+                        Status = "Выдана",
+                        Reader = "222"
+                    }
+                };
+
+                _context.Books.AddRange(initialBooks);
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                
+                Console.WriteLine($"Ошибка при инициализации данных: {ex.Message}");
+            }
+        }
 
         public void AddBook(Book book)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
-                string query = "INSERT INTO Book (Article, Title, Genre, Description, IssueDate, ReturnDate, Status, Reader) " +
-                               "VALUES (@Article, @Title, @Genre, @Description, @IssueDate, @ReturnDate, @Status, @Reader)";
-
-                SqlCommand command = new SqlCommand(query, connection);
-                command.Parameters.AddWithValue("@Article", book.Article);
-                command.Parameters.AddWithValue("@Title", book.Title);
-                command.Parameters.AddWithValue("@Genre", book.Genre);
-                command.Parameters.AddWithValue("@Description", book.Description);
-                command.Parameters.AddWithValue("@IssueDate", book.IssueDate);
-                command.Parameters.AddWithValue("@ReturnDate", book.ReturnDate);
-                command.Parameters.AddWithValue("@Status", book.Status);
-                command.Parameters.AddWithValue("@Reader", book.Reader);
-
-                connection.Open();
-                command.ExecuteNonQuery();
+                _context.Books.Add(book);
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при добавлении книги: {ex.Message}");
+                throw;
             }
         }
 
         public List<Book> GetBooks()
         {
-            List<Book> books = new List<Book>();
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                string query = "SELECT * FROM Book";
-                SqlCommand command = new SqlCommand(query, connection);
-
-                connection.Open();
-                SqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    Book book = new Book
-                    {
-                        Article = Convert.ToInt32(reader["Article"]),
-                        Title = reader["Title"].ToString(),
-                        Genre = reader["Genre"].ToString(),
-                        Description = reader["Description"].ToString(),
-                        IssueDate = (DateTime)reader["IssueDate"],
-                        ReturnDate = (DateTime)reader["ReturnDate"],
-                        Status = reader["Status"].ToString(),
-                        Reader = reader["Reader"].ToString()
-                    };
-                    books.Add(book);
-                }
-            }
-
-            return books;
+            return _context.Books.ToList();
         }
 
         public void UpdateBook(Book book)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
-                string query = "UPDATE Book SET Title = @Title, Genre = @Genre, Description = @Description, " +
-                               "IssueDate = @IssueDate, ReturnDate = @ReturnDate, Status = @Status, Reader = @Reader " +
-                               "WHERE Article = @Article"; 
-
-                SqlCommand command = new SqlCommand(query, connection);
-                command.Parameters.AddWithValue("@Article", book.Article);
-                command.Parameters.AddWithValue("@Title", book.Title);
-                command.Parameters.AddWithValue("@Genre", book.Genre);
-                command.Parameters.AddWithValue("@Description", book.Description);
-                command.Parameters.AddWithValue("@IssueDate", book.IssueDate);
-                command.Parameters.AddWithValue("@ReturnDate", book.ReturnDate);
-                command.Parameters.AddWithValue("@Status", book.Status);
-                command.Parameters.AddWithValue("@Reader", book.Reader);
-
-                connection.Open();
-                command.ExecuteNonQuery();
+                var existingBook = _context.Books.Find(book.Id);
+                if (existingBook != null)
+                {
+                    _context.Entry(existingBook).CurrentValues.SetValues(book);
+                    _context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при обновлении книги: {ex.Message}");
+                throw;
             }
         }
 
         public void DeleteBook(int id)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            try
             {
-                string query = "DELETE FROM Book WHERE Article = @Article"; 
-
-                SqlCommand command = new SqlCommand(query, connection);
-                command.Parameters.AddWithValue("@Article", id);
-
-                connection.Open();
-                command.ExecuteNonQuery();
+                var book = _context.Books.Find(id);
+                if (book != null)
+                {
+                    _context.Books.Remove(book);
+                    _context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при удалении книги: {ex.Message}");
+                throw;
             }
         }
-
     }
 }
