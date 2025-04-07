@@ -73,7 +73,7 @@ namespace project2233
                 return;
             }
 
-            selectedBook.Article = Convert.ToInt32(ArticleTextBox);
+            selectedBook.Article = Convert.ToInt32(ArticleTextBox.Text);
             selectedBook.Title = TitleTextBox.Text;
             selectedBook.Genre = GenreTextBox.Text;
             selectedBook.Description = DescriptionTextBox.Text;
@@ -92,13 +92,42 @@ namespace project2233
         {
             if (selectedBook == null)
             {
-                MessageBox.Show("Пожалуйста, выберите книгу для удаления.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Пожалуйста, выберите книгу для удаления.",
+                              "Ошибка",
+                              MessageBoxButton.OK,
+                              MessageBoxImage.Warning);
                 return;
             }
 
-            dbHelper.DeleteBook(selectedBook.Article); 
-            LoadBooks(); 
-            ClearInputs();
+            try
+            {
+                
+                var confirmResult = MessageBox.Show(
+                    $"Вы уверены, что хотите удалить книгу '{selectedBook.Title}'?",
+                    "Подтверждение удаления",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (confirmResult == MessageBoxResult.Yes)
+                {
+                    
+                    dbHelper.DeleteBook(selectedBook.Id);
+                    LoadBooks();
+                    ClearInputs();
+
+                    MessageBox.Show("Книга успешно удалена!",
+                                  "Успех",
+                                  MessageBoxButton.OK,
+                                  MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при удалении книги: {ex.Message}",
+                               "Ошибка",
+                               MessageBoxButton.OK,
+                               MessageBoxImage.Error);
+            }
         }
 
         private void BooksDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)

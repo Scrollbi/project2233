@@ -10,8 +10,8 @@ namespace project2233
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseSqlServer(
-                    "Server=dbsrv\\dub2024;Database=oshkinng207b2;Integrated Security=True;TrustServerCertificate=True");
+                
+                optionsBuilder.UseSqlite("Data Source=library.db");
             }
         }
 
@@ -32,20 +32,13 @@ namespace project2233
                     .IsRequired()
                     .HasMaxLength(50);
 
-                entity.Property(e => e.Description)
-                    .HasColumnType("nvarchar(max)");
+                entity.Property(e => e.Description);
 
                 entity.Property(e => e.Status)
                     .HasMaxLength(50);
 
                 entity.Property(e => e.Reader)
                     .HasMaxLength(100);
-
-                entity.Property(e => e.IssueDate)
-                    .HasColumnType("datetime");
-
-                entity.Property(e => e.ReturnDate)
-                    .HasColumnType("datetime");
             });
         }
     }

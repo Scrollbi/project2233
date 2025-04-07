@@ -12,11 +12,8 @@ namespace project2233
         public Database()
         {
             _context = new DatabaseContext();
+            _context.Database.EnsureCreated(); 
 
-            
-            _context.Database.EnsureCreated();
-
-            
             if (!_context.Books.Any())
             {
                 SeedInitialData();
